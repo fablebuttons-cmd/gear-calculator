@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Калькулятор зубчатых передач</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #050b1f 0%, #0a1a3a 50%, #0f2557 100%);
+    color: #e0e6ed;
+    padding: clamp(8px, 2vw, 16px);
+    display: flex;
+    flex-direction: column;
+  }
+  .container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  header {
+    text-align: center;
+    margin-bottom: clamp(12px, 2vh, 20px);
+    flex-shrink: 0;
+  }
+  h1 {
+    font-size: clamp(1.2em, 4vw, 2em);
+    background: linear-gradient(90deg, #00d4ff, #4a90e2, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .subtitle {
+    color: #7a94c4;
+    margin-top: 4px;
+    font-size: clamp(0.7em, 2vw, 0.9em);
+  }
+  .type-selector {
+    display: flex;
+    gap: 6px;
+    margin: 12px auto;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .type-btn {
+    padding: 8px 16px;
+    background: rgba(5, 15, 40, 0.6);
+    border: 1px solid rgba(74, 144, 226, 0.3);
+    color: #a8b8d8;
+    border-radius: 6px;
+    font-size: clamp(0.7em, 2vw, 0.85em);
+    cursor: pointer;
+    transition: all 0.3s;
+    -webkit-appearance: none;
+  }
+  .type-btn.active {
+    background: linear-gradient(135deg, #0066cc, #00d4ff);
+    color: white;
+    border-color: #00d4ff;
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: clamp(10px, 2vw, 20px);
+  }
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: rgba(15, 30, 65, 0.6);
+    border: 1px solid rgba(74, 144, 226, 0.3);
+    border-radius: 10px;
+    padding: clamp(12px, 2.5vw, 20px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+  }
+  .card h2 {
+    color: #00d4ff;
+    font-size: clamp(0.9em, 2.5vw, 1.1em);
+    margin-bottom: clamp(10px, 1.5vh, 16px);
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(74, 144, 226, 0.2);
+    flex-shrink: 0;
+  }
+  .form-group { margin-bottom: clamp(10px, 1.5vh, 14px); }
+  label {
+    display: block;
+    margin-bottom: 4px;
+    color: #a8b8d8;
+    font-size: clamp(0.75em, 2vw, 0.85em);
+  }
+  .label-hint { font-size: 0.7em; color: #5a7aaa; font-style: italic; }
+  input, select {
+    width: 100%;
+    padding: clamp(10px, 2vh, 14px) 10px;
+    background: rgba(5, 15, 40, 0.7);
+    border: 1px solid rgba(74, 144, 226, 0.3);
+    border-radius: 6px;
+    color: #e0e6ed;
+    font-size: clamp(0.9em, 2.5vw, 1em);
+    transition: border-color 0.3s, box-shadow 0.3s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.15);
+  }
+  input.invalid {
+    border-color: #ff4d7e;
+    box-shadow: 0 0 0 2px rgba(255, 77, 126, 0.15);
+  }
+  
+  .angle-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .angle-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .angle-field-label {
+    font-size: 0.7em;
+    color: #7a94c4;
+    text-align: center;
+  }
+  .angle-input-wrap {
+    display: flex;
+    align-items: center;
+    background: rgba(5, 15, 40, 0.7);
+    border: 1px solid rgba(74, 144, 226, 0.3);
+    border-radius: 6px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    overflow: hidden;
+  }
+  .angle-input-wrap:focus-within {
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.15);
+  }
+  .angle-input-wrap.invalid {
+    border-color: #ff4d7e;
+    box-shadow: 0 0 0 2px rgba(255, 77, 126, 0.15);
+  }
+  .angle-input-wrap input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: clamp(10px, 2vh, 14px) 8px;
+    text-align: center;
+    font-weight: 600;
+    min-width: 0;
+  }
+  .angle-input-wrap input:focus {
+    box-shadow: none;
+  }
+  .angle-suffix {
+    padding: 0 8px 0 0;
+    color: #00d4ff;
+    font-weight: 600;
+    font-size: 1.1em;
+    flex-shrink: 0;
+  }
+  .angle-separator {
+    color: #4a90e2;
+    font-size: 1.2em;
+    font-weight: bold;
+    padding: 0 2px;
+    flex-shrink: 0;
+    align-self: flex-end;
+    padding-bottom: clamp(10px, 2vh, 14px);
+  }
+  
+  .gear-section {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: rgba(5, 15, 40, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(74, 144, 226, 0.2);
+  }
+  .gear-section h3 {
+    color: #4a90e2;
+    font-size: clamp(0.85em, 2vw, 1em);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(74, 144, 226, 0.15);
+  }
+  
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: clamp(8px, 1.5vh, 12px) 12px;
+    margin-bottom: clamp(6px, 1vh, 10px);
+    background: rgba(5, 15, 40, 0.5);
+    border-left: 3px solid #00d4ff;
+    border-radius: 4px;
+    transition: all 0.3s;
+  }
+  .result-row:hover {
+    background: rgba(0, 212, 255, 0.06);
+    transform: translateX(2px);
+  }
+  .result-row.highlight {
+    border-left-color: #ff9f4d;
+    background: rgba(255, 159, 77, 0.06);
+  }
+  .result-row.helical {
+    border-left-color: #c585ff;
+    background: rgba(197, 133, 255, 0.05);
+  }
+  .result-row.error {
+    border-left-color: #ff4d7e;
+    background: rgba(255, 77, 126, 0.08);
+  }
+  .result-row.success {
+    border-left-color: #4dff91;
+    background: rgba(77, 255, 145, 0.06);
+  }
+  .result-label { color: #a8b8d8; font-size: clamp(0.75em, 2vw, 0.85em); }
+  .result-value {
+    color: #00d4ff;
+    font-weight: 600;
+    font-size: clamp(0.8em, 2.2vw, 0.95em);
+    font-family: 'Consolas', 'Monaco', monospace;
+    word-break: break-all;
+  }
+  .formula-box {
+    margin-top: 10px;
+    padding: 12px;
+    background: rgba(5, 15, 40, 0.5);
+    border-radius: 6px;
+    border: 1px dashed rgba(74, 144, 226, 0.2);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: clamp(0.7em, 2vw, 0.8em);
+    color: #7a94c4;
+    line-height: 1.6;
+    flex-shrink: 0;
+  }
+  .formula-box span { color: #00d4ff; }
+  .formula-box .hl { color: #ff9f4d; }
+  .formula-box .hl2 { color: #c585ff; }
+  .status-bar {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: clamp(0.7em, 1.8vw, 0.8em);
+    text-align: center;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .status-bar.ok {
+    background: rgba(77, 255, 145, 0.1);
+    border: 1px solid rgba(77, 255, 145, 0.3);
+    color: #4dff91;
+  }
+  .status-bar.err {
+    background: rgba(255, 77, 126, 0.1);
+    border: 1px solid rgba(255, 77, 126, 0.3);
+    color: #ff4d7e;
+  }
+  
+  .copy-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: clamp(10px, 2vh, 14px);
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(74, 144, 226, 0.15));
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    color: #00d4ff;
+    border-radius: 6px;
+    font-size: clamp(0.8em, 2vw, 0.9em);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    -webkit-appearance: none;
+  }
+  .copy-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.25), rgba(74, 144, 226, 0.25));
+    border-color: #00d4ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+  }
+  .copy-btn:active { transform: translateY(0); }
+  .copy-btn.copied {
+    background: linear-gradient(135deg, rgba(77, 255, 145, 0.2), rgba(77, 255, 145, 0.1));
+    border-color: #4dff91;
+    color: #4dff91;
+  }
+  .copy-icon { font-size: 1.2em; }
+  
+  .hidden { display: none !important; }
+  @media (max-width: 600px) {
+    .formula-box { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚙ Gear Calculator Pro</h1>
+    <p class="subtitle">Расчёт зубчатых передач</p>
+    <div class="type-selector">
+      <button class="type-btn active" data-type="cylindrical" onclick="switchType('cylindrical')">Цилиндрическая</button>
+      <button class="type-btn" data-type="worm" onclick="switchType('worm')">Червячная</button>
+      <button class="type-btn" data-type="pair" onclick="switchType('pair')">Пара шестерён</button>
+      <button class="type-btn" data-type="conical" onclick="switchType('conical')">Коническая</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Исходные данные</h2>
+      
+      <div id="inputs-cylindrical">
+        <div class="form-group">
+          <label for="module">Нормальный модуль m<sub>n</sub> (мм)</label>
+          <input type="number" id="module" value="2" min="0.1" step="0.1">
+        </div>
+        <div class="form-group">
+          <label for="teeth">Количество зубьев z</label>
+          <input type="number" id="teeth" value="20" min="6" step="1">
+        </div>
+        <div class="form-group">
+          <label for="angle">Нормальный угол профиля α<sub>n</sub></label>
+          <select id="angle">
+            <option value="20" selected>20°</option>
+            <option value="30">30°</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Угол наклона β <span class="label-hint">0 — прямозубая</span></label>
+          <div class="angle-row">
+            <div class="angle-field">
+              <div class="angle-field-label">градусы</div>
+              <div class="angle-input-wrap" id="wrap-helix-deg">
+                <input type="number" id="helix-deg" value="0" min="0" max="45" step="1">
+                <span class="angle-suffix">°</span>
+              </div>
+            </div>
+            <div class="angle-separator">:</div>
+            <div class="angle-field">
+              <div class="angle-field-label">минуты</div>
+              <div class="angle-input-wrap" id="wrap-helix-min">
+                <input type="number" id="helix-min" value="0" min="0" max="59" step="1">
+                <span class="angle-suffix">'</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="shift">Коэффициент смещения x</label>
+          <input type="number" id="shift" value="0" min="-1" max="1" step="0.05">
+        </div>
+      </div>
+
+      <div id="inputs-worm" class="hidden">
+        <div class="form-group">
+          <label for="w-module">Модуль m (мм)</label>
+          <input type="number" id="w-module" value="4" min="1" step="0.5">
+        </div>
+        <div class="form-group">
+          <label for="w-z1">Количество заходов червяка z<sub>1</sub> <span class="label-hint">от 1 до 10</span></label>
+          <input type="number" id="w-z1" value="1" min="1" max="10" step="1">
+        </div>
+        <div class="form-group">
+          <label for="w-z2">Количество зубьев колеса z<sub>2</sub></label>
+          <input type="number" id="w-z2" value="40" min="26" max="100" step="1">
+        </div>
+        <div class="form-group">
+          <label for="w-q">Коэффициент диаметра червяка q</label>
+          <select id="w-q">
+            <option value="8">8</option>
+            <option value="10" selected>10</option>
+            <option value="12.5">12.5</option>
+            <option value="16">16</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="w-angle">Угол профиля α</label>
+          <select id="w-angle">
+            <option value="20" selected>20°</option>
+            <option value="30">30°</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="inputs-pair" class="hidden">
+        <div class="gear-section">
+          <h3>Шестерня 1</h3>
+          <div class="form-group">
+            <label for="p1-module">Модуль m<sub>n</sub> (мм)</label>
+            <input type="number" id="p1-module" value="2" min="0.1" step="0.1">
+          </div>
+          <div class="form-group">
+            <label for="p1-teeth">Количество зубьев z<sub>1</sub></label>
+            <input type="number" id="p1-teeth" value="20" min="6" step="1">
+          </div>
+          <div class="form-group">
+            <label for="p1-angle">Угол профиля α<sub>n</sub></label>
+            <select id="p1-angle">
+              <option value="20" selected>20°</option>
+              <option value="30">30°</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="p1-shift">Смещение x<sub>1</sub></label>
+            <input type="number" id="p1-shift" value="0" min="-1" max="1" step="0.05">
+          </div>
+        </div>
+        <div class="gear-section">
+          <h3>Шестерня 2</h3>
+          <div class="form-group">
+            <label for="p2-module">Модуль m<sub>n</sub> (мм)</label>
+            <input type="number" id="p2-module" value="2" min="0.1" step="0.1">
+          </div>
+          <div class="form-group">
+            <label for="p2-teeth">Количество зубьев z<sub>2</sub></label>
+            <input type="number" id="p2-teeth" value="40" min="6" step="1">
+          </div>
+          <div class="form-group">
+            <label for="p2-angle">Угол профиля α<sub>n</sub></label>
+            <select id="p2-angle">
+              <option value="20" selected>20°</option>
+              <option value="30">30°</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="p2-shift">Смещение x<sub>2</sub></label>
+            <input type="number" id="p2-shift" value="0" min="-1" max="1" step="0.05">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Угол наклона β <span class="label-hint">0 — прямозубая</span></label>
+          <div class="angle-row">
+            <div class="angle-field">
+              <div class="angle-field-label">градусы</div>
+              <div class="angle-input-wrap" id="wrap-p-helix-deg">
+                <input type="number" id="p-helix-deg" value="0" min="0" max="45" step="1">
+                <span class="angle-suffix">°</span>
+              </div>
+            </div>
+            <div class="angle-separator">:</div>
+            <div class="angle-field">
+              <div class="angle-field-label">минуты</div>
+              <div class="angle-input-wrap" id="wrap-p-helix-min">
+                <input type="number" id="p-helix-min" value="0" min="0" max="59" step="1">
+                <span class="angle-suffix">'</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="inputs-conical" class="hidden">
+        <div class="form-group">
+          <label for="c-module">Модуль m (большой торец) (мм)</label>
+          <input type="number" id="c-module" value="3" min="0.5" step="0.5">
+        </div>
+        <div class="gear-section">
+          <h3>Шестерня 1</h3>
+          <div class="form-group">
+            <label for="c-z1">Количество зубьев z<sub>1</sub></label>
+            <input type="number" id="c-z1" value="20" min="12" step="1">
+          </div>
+        </div>
+        <div class="gear-section">
+          <h3>Шестерня 2</h3>
+          <div class="form-group">
+            <label for="c-z2">Количество зубьев z<sub>2</sub></label>
+            <input type="number" id="c-z2" value="40" min="12" step="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="c-angle">Угол профиля α</label>
+          <select id="c-angle">
+            <option value="20" selected>20°</option>
+            <option value="30">30°</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="c-sigma">Межосевой угол Σ (°)</label>
+          <input type="number" id="c-sigma" value="90" min="1" max="180" step="1">
+        </div>
+        <div class="form-group">
+          <label for="c-tooth-type">Тип зуба</label>
+          <select id="c-tooth-type" onchange="toggleConicalHelix()">
+            <option value="straight" selected>Прямой</option>
+            <option value="helical">Винтовой (спиральный)</option>
+          </select>
+        </div>
+        <div class="form-group hidden" id="c-helix-group">
+          <label>Угол наклона β <span class="label-hint">для винтового зуба</span></label>
+          <div class="angle-row">
+            <div class="angle-field">
+              <div class="angle-field-label">градусы</div>
+              <div class="angle-input-wrap" id="wrap-c-helix-deg">
+                <input type="number" id="c-helix-deg" value="15" min="0" max="45" step="1">
+                <span class="angle-suffix">°</span>
+              </div>
+            </div>
+            <div class="angle-separator">:</div>
+            <div class="angle-field">
+              <div class="angle-field-label">минуты</div>
+              <div class="angle-input-wrap" id="wrap-c-helix-min">
+                <input type="number" id="c-helix-min" value="0" min="0" max="59" step="1">
+                <span class="angle-suffix">'</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="status" class="status-bar ok">✓ Расчёт выполнен</div>
+
+      <div class="formula-box" id="formulas-cylindrical">
+        <div><span>m<sub>t</sub></span> = m<sub>n</sub> / cos(β)</div>
+        <div><span>d</span> = m<sub>n</sub> · z / cos(β)</div>
+        <div><span>z<sub>v</sub></span> = z / cos³(β)</div>
+        <div class="hl">W<sub>kn</sub> = m<sub>n</sub>·cos(α<sub>n</sub>)·[π·(k−0.5) + z<sub>v</sub>·inv(α<sub>n</sub>)] + 2·x·m<sub>n</sub>·sin(α<sub>n</sub>)</div>
+        <div class="hl2">P<sub>z</sub> = π·d / tan(β)</div>
+      </div>
+
+      <div class="formula-box hidden" id="formulas-worm">
+        <div><span>d<sub>1</sub></span> = m · q — диаметр червяка</div>
+        <div><span>d<sub>2</sub></span> = m · z<sub>2</sub> — диаметр колеса</div>
+        <div><span>a<sub>w</sub></span> = m · (q + z<sub>2</sub>) / 2</div>
+        <div><span>u</span> = z<sub>2</sub> / z<sub>1</sub> — передаточное число</div>
+        <div class="hl">γ = arctan(z<sub>1</sub> / q) — угол подъёма витка</div>
+        <div class="hl2">p<sub>z</sub> = π · m · z<sub>1</sub> — ход червяка</div>
+      </div>
+
+      <div class="formula-box hidden" id="formulas-pair">
+        <div><span>a</span> = m<sub>n</sub>·(z<sub>1</sub> + z<sub>2</sub>) / (2·cos(β))</div>
+        <div><span>a<sub>w</sub></span> = a + y·m<sub>n</sub> — межосевое с учётом смещения</div>
+        <div><span>y</span> = (x<sub>1</sub> + x<sub>2</sub>) — коэффициент центрирования</div>
+        <div class="hl">u = z<sub>2</sub> / z<sub>1</sub> — передаточное число</div>
+        <div class="hl2">ε<sub>α</sub> — коэффициент перекрытия</div>
+      </div>
+
+      <div class="formula-box hidden" id="formulas-conical">
+        <div><span>δ<sub>1</sub></span> = arctan(z<sub>1</sub> / z<sub>2</sub>) — конусный угол</div>
+        <div><span>R</span> = m·√(z<sub>1</sub>² + z<sub>2</sub>²) / 2</div>
+        <div><span>b</span> = min(R/3, 10m) — ширина венца</div>
+        <div class="hl">m<sub>m</sub> = m·(1 − 0.5·b/R) — средний модуль</div>
+        <div class="hl2">d<sub>a</sub> = d + 2m·cos(δ) — диаметр вершин</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Результаты расчёта</h2>
+      
+      <div id="results-cylindrical">
+        <div class="result-row helical">
+          <span class="result-label">Торцовый модуль m<sub>t</sub></span>
+          <span class="result-value" id="r-mt" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Делительный диаметр d</span>
+          <span class="result-value" id="r-d">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр вершин dₐ</span>
+          <span class="result-value" id="r-da">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр впадин d_f</span>
+          <span class="result-value" id="r-df">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Основной диаметр d_b</span>
+          <span class="result-value" id="r-db">—</span>
+        </div>
+        <div class="result-row helical">
+          <span class="result-label">Приведённое z<sub>v</sub></span>
+          <span class="result-value" id="r-zv" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row highlight">
+          <span class="result-label">Зубьев в нормали k</span>
+          <span class="result-value" id="r-k" style="color:#ff9f4d">—</span>
+        </div>
+        <div class="result-row highlight">
+          <span class="result-label">Длина нормали W<sub>kn</sub></span>
+          <span class="result-value" id="r-wk" style="color:#ff9f4d">—</span>
+        </div>
+        <div class="result-row helical">
+          <span class="result-label">Торцовый угол α<sub>t</sub></span>
+          <span class="result-value" id="r-at" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row helical">
+          <span class="result-label">Ход винта P<sub>z</sub></span>
+          <span class="result-value" id="r-pz" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Высота зуба h</span>
+          <span class="result-value" id="r-h">—</span>
+        </div>
+      </div>
+
+      <div id="results-worm" class="hidden">
+        <div class="result-row highlight">
+          <span class="result-label">Передаточное число u</span>
+          <span class="result-value" id="w-u" style="color:#ff9f4d">—</span>
+        </div>
+        <div class="result-row highlight">
+          <span class="result-label">Межосевое расстояние a<sub>w</sub></span>
+          <span class="result-value" id="w-aw" style="color:#ff9f4d">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Делительный диаметр червяка d<sub>1</sub></span>
+          <span class="result-value" id="w-d1">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр вершин червяка d<sub>a1</sub></span>
+          <span class="result-value" id="w-da1">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр впадин червяка d<sub>f1</sub></span>
+          <span class="result-value" id="w-df1">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Делительный диаметр колеса d<sub>2</sub></span>
+          <span class="result-value" id="w-d2">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр вершин колеса d<sub>a2</sub></span>
+          <span class="result-value" id="w-da2">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр впадин колеса d<sub>f2</sub></span>
+          <span class="result-value" id="w-df2">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Угол подъёма витка γ</span>
+          <span class="result-value" id="w-gamma" style="color:#c585ff; font-weight:600">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Ход червяка p<sub>z</sub></span>
+          <span class="result-value" id="w-pz" style="color:#c585ff; font-weight:600">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Высота витка h</span>
+          <span class="result-value" id="w-h">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Длина нарезанной части b<sub>1</sub></span>
+          <span class="result-value" id="w-b1">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Ширина колеса b<sub>2</sub></span>
+          <span class="result-value" id="w-b2">—</span>
+        </div>
+      </div>
+
+      <div id="results-pair" class="hidden">
+        <div class="result-row highlight">
+          <span class="result-label">Передаточное число u</span>
+          <span class="result-value" id="p-u" style="color:#ff9f4d">—</span>
+        </div>
+        <div class="result-row highlight">
+          <span class="result-label">Межосевое расстояние a<sub>w</sub></span>
+          <span class="result-value" id="p-aw" style="color:#ff9f4d">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Делительный диаметр шестерни 1 d<sub>1</sub></span>
+          <span class="result-value" id="p-d1">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Делительный диаметр шестерни 2 d<sub>2</sub></span>
+          <span class="result-value" id="p-d2">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр вершин шестерни 1 d<sub>a1</sub></span>
+          <span class="result-value" id="p-da1">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр вершин шестерни 2 d<sub>a2</sub></span>
+          <span class="result-value" id="p-da2">—</span>
+        </div>
+        <div class="result-row helical">
+          <span class="result-label">Коэффициент центрирования y</span>
+          <span class="result-value" id="p-y" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row helical">
+          <span class="result-label">Коэффициент перекрытия ε<sub>α</sub></span>
+          <span class="result-value" id="p-epsilon" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row success" id="p-check-module">
+          <span class="result-label">✓ Совпадение модулей</span>
+          <span class="result-value" style="color:#4dff91">OK</span>
+        </div>
+        <div class="result-row success" id="p-check-angle">
+          <span class="result-label">✓ Совпадение углов профиля</span>
+          <span class="result-value" style="color:#4dff91">OK</span>
+        </div>
+      </div>
+
+      <div id="results-conical" class="hidden">
+        <div class="result-row highlight">
+          <span class="result-label">Передаточное число u</span>
+          <span class="result-value" id="c-u" style="color:#ff9f4d">—</span>
+        </div>
+        <div class="result-row highlight">
+          <span class="result-label">Внешнее конусное расстояние R</span>
+          <span class="result-value" id="c-R" style="color:#ff9f4d">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Конусный угол шестерни δ<sub>1</sub></span>
+          <span class="result-value" id="c-delta1">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Конусный угол колеса δ<sub>2</sub></span>
+          <span class="result-value" id="c-delta2">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Делительный диаметр шестерни d<sub>1</sub></span>
+          <span class="result-value" id="c-d1">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Делительный диаметр колеса d<sub>2</sub></span>
+          <span class="result-value" id="c-d2">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр вершин шестерни d<sub>a1</sub></span>
+          <span class="result-value" id="c-da1">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр вершин колеса d<sub>a2</sub></span>
+          <span class="result-value" id="c-da2">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр впадин шестерни d<sub>f1</sub></span>
+          <span class="result-value" id="c-df1">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Диаметр впадин колеса d<sub>f2</sub></span>
+          <span class="result-value" id="c-df2">—</span>
+        </div>
+        <div class="result-row helical">
+          <span class="result-label">Ширина зубчатого венца b</span>
+          <span class="result-value" id="c-b" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row helical">
+          <span class="result-label">Средний модуль m<sub>m</sub></span>
+          <span class="result-value" id="c-mm" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row helical">
+          <span class="result-label">Средний делительный d<sub>m1</sub></span>
+          <span class="result-value" id="c-dm1" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row helical">
+          <span class="result-label">Средний делительный d<sub>m2</sub></span>
+          <span class="result-value" id="c-dm2" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row helical" id="c-row-mt">
+          <span class="result-label">Торцовый модуль m<sub>t</sub></span>
+          <span class="result-value" id="c-mt" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row helical" id="c-row-zv">
+          <span class="result-label">Приведённое z<sub>v1</sub></span>
+          <span class="result-value" id="c-zv1" style="color:#c585ff">—</span>
+        </div>
+        <div class="result-row helical" id="c-row-zv2">
+          <span class="result-label">Приведённое z<sub>v2</sub></span>
+          <span class="result-value" id="c-zv2" style="color:#c585ff">—</span>
+        </div>
+      </div>
+
+      <button class="copy-btn" id="copy-btn" onclick="copyResults()">
+        <span class="copy-icon">📋</span>
+        <span id="copy-btn-text">Скопировать результаты</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var currentType = 'cylindrical';
+
+function readAngle(degId, minId) {
+  var degEl = document.getElementById(degId);
+  var minEl = document.getElementById(minId);
+  if (!degEl || !minEl) return { valid: false, value: NaN, deg: NaN, min: NaN };
+  
+  var deg = parseFloat(degEl.value);
+  var min = parseFloat(minEl.value);
+  
+  if (isNaN(deg) || isNaN(min)) return { valid: false, value: NaN, deg: deg, min: min };
+  if (deg < 0 || min < 0 || min > 59) return { valid: false, value: NaN, deg: deg, min: min };
+  
+  return { valid: true, value: deg + min / 60, deg: deg, min: min };
+}
+
+function formatAngle(decimalDeg) {
+  var deg = Math.floor(decimalDeg);
+  var minFloat = (decimalDeg - deg) * 60;
+  var min = Math.round(minFloat);
+  if (min === 60) { deg++; min = 0; }
+  return deg + '° ' + min + "'";
+}
+
+function switchType(type) {
+  currentType = type;
+  
+  var btns = document.querySelectorAll('.type-btn');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].classList.toggle('active', btns[i].getAttribute('data-type') === type);
+  }
+  
+  document.getElementById('inputs-cylindrical').classList.toggle('hidden', type !== 'cylindrical');
+  document.getElementById('inputs-worm').classList.toggle('hidden', type !== 'worm');
+  document.getElementById('inputs-pair').classList.toggle('hidden', type !== 'pair');
+  document.getElementById('inputs-conical').classList.toggle('hidden', type !== 'conical');
+  document.getElementById('formulas-cylindrical').classList.toggle('hidden', type !== 'cylindrical');
+  document.getElementById('formulas-worm').classList.toggle('hidden', type !== 'worm');
+  document.getElementById('formulas-pair').classList.toggle('hidden', type !== 'pair');
+  document.getElementById('formulas-conical').classList.toggle('hidden', type !== 'conical');
+  document.getElementById('results-cylindrical').classList.toggle('hidden', type !== 'cylindrical');
+  document.getElementById('results-worm').classList.toggle('hidden', type !== 'worm');
+  document.getElementById('results-pair').classList.toggle('hidden', type !== 'pair');
+  document.getElementById('results-conical').classList.toggle('hidden', type !== 'conical');
+  
+  calculate();
+}
+
+function toggleConicalHelix() {
+  var toothType = document.getElementById('c-tooth-type').value;
+  var helixGroup = document.getElementById('c-helix-group');
+  var rowMt = document.getElementById('c-row-mt');
+  var rowZv1 = document.getElementById('c-row-zv');
+  var rowZv2 = document.getElementById('c-row-zv2');
+  
+  if (toothType === 'helical') {
+    helixGroup.classList.remove('hidden');
+    rowMt.classList.remove('hidden');
+    rowZv1.classList.remove('hidden');
+    rowZv2.classList.remove('hidden');
+  } else {
+    helixGroup.classList.add('hidden');
+    rowMt.classList.add('hidden');
+    rowZv1.classList.add('hidden');
+    rowZv2.classList.add('hidden');
+  }
+  calculate();
+}
+
+function calculate() {
+  if (currentType === 'cylindrical') {
+    calculateCylindrical();
+  } else if (currentType === 'worm') {
+    calculateWorm();
+  } else if (currentType === 'pair') {
+    calculatePair();
+  } else {
+    calculateConical();
+  }
+}
+
+function setInvalid(wrapId, isInvalid) {
+  var wrap = document.getElementById(wrapId);
+  if (wrap) {
+    if (isInvalid) wrap.classList.add('invalid');
+    else wrap.classList.remove('invalid');
+  }
+}
+
+function calculateCylindrical() {
+  try {
+    var moduleEl = document.getElementById('module');
+    var teethEl = document.getElementById('teeth');
+    var angleEl = document.getElementById('angle');
+    var shiftEl = document.getElementById('shift');
+    var statusEl = document.getElementById('status');
+
+    if (!moduleEl || !teethEl || !angleEl) return;
+
+    var mn = parseFloat(moduleEl.value);
+    var z = parseInt(teethEl.value, 10);
+    var alphaN = parseFloat(angleEl.value);
+    var xRaw = shiftEl ? shiftEl.value : '0';
+    var x = (xRaw === '' || xRaw === '-') ? 0 : parseFloat(xRaw);
+
+    var betaAngle = readAngle('helix-deg', 'helix-min');
+
+    moduleEl.classList.remove('invalid');
+    teethEl.classList.remove('invalid');
+    setInvalid('wrap-helix-deg', false);
+    setInvalid('wrap-helix-min', false);
+
+    var errors = [];
+    if (isNaN(mn) || mn <= 0) { errors.push('m'); moduleEl.classList.add('invalid'); }
+    if (isNaN(z) || z < 6) { errors.push('z'); teethEl.classList.add('invalid'); }
+    if (!betaAngle.valid || betaAngle.deg > 45) { 
+      errors.push('β'); 
+      if (!betaAngle.valid) {
+        setInvalid('wrap-helix-deg', true);
+        setInvalid('wrap-helix-min', true);
+      } else {
+        setInvalid('wrap-helix-deg', true);
+      }
+    }
+
+    if (errors.length > 0) {
+      if (statusEl) {
+        statusEl.className = 'status-bar err';
+        statusEl.textContent = '⚠ Проверьте поля: ' + errors.join(', ');
+      }
+      return;
+    }
+
+    if (statusEl) {
+      statusEl.className = 'status-bar ok';
+      statusEl.textContent = '✓ Расчёт выполнен';
+    }
+
+    var beta = betaAngle.value;
+    var alphaNRad = alphaN * Math.PI / 180;
+    var betaRad = beta * Math.PI / 180;
+    var cosBeta = Math.cos(betaRad);
+
+    var mt = mn / cosBeta;
+    var alphaT = Math.atan(Math.tan(alphaNRad) / cosBeta);
+    var alphaTDeg = alphaT * 180 / Math.PI;
+    var d  = mt * z;
+    var da = d + 2 * mn * (1 + x);
+    var df = d - 2 * mn * (1.25 - x);
+    var db = d * Math.cos(alphaT);
+    var h  = 2.25 * mn;
+    var zv = z / Math.pow(cosBeta, 3);
+
+    var invAlphaN = Math.tan(alphaNRad) - alphaNRad;
+    var k = Math.round(zv * alphaN / 180 + 0.5);
+    k = Math.max(2, Math.min(k, z));
+
+    var Wkn = mn * Math.cos(alphaNRad) * (Math.PI * (k - 0.5) + zv * invAlphaN) + 2 * x * mn * Math.sin(alphaNRad);
+    var Pz = beta > 0.01 ? (Math.PI * d / Math.tan(betaRad)) : Infinity;
+
+    var elements = {
+      'r-mt': mt.toFixed(3) + ' мм',
+      'r-d':  d.toFixed(3) + ' мм',
+      'r-da': da.toFixed(3) + ' мм',
+      'r-df': df.toFixed(3) + ' мм',
+      'r-db': db.toFixed(3) + ' мм',
+      'r-zv': zv.toFixed(2),
+      'r-k':  k + ' зуб.',
+      'r-wk': Wkn.toFixed(3) + ' мм',
+      'r-at': formatAngle(alphaTDeg) + '  (' + alphaTDeg.toFixed(2) + '°)',
+      'r-h':  h.toFixed(3) + ' мм',
+      'r-pz': isFinite(Pz) ? Pz.toFixed(2) + ' мм' : '∞'
+    };
+
+    for (var id in elements) {
+      if (elements.hasOwnProperty(id)) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = elements[id];
+      }
+    }
+
+  } catch (error) {
+    console.error('Ошибка при расчёте:', error);
+  }
+}
+
+function calculateWorm() {
+  try {
+    var moduleEl = document.getElementById('w-module');
+    var z1El = document.getElementById('w-z1');
+    var z2El = document.getElementById('w-z2');
+    var qEl = document.getElementById('w-q');
+    var angleEl = document.getElementById('w-angle');
+    var statusEl = document.getElementById('status');
+
+    if (!moduleEl || !z1El || !z2El || !qEl || !angleEl) return;
+
+    var m = parseFloat(moduleEl.value);
+    var z1 = parseInt(z1El.value, 10);
+    var z2 = parseInt(z2El.value, 10);
+    var q = parseFloat(qEl.value);
+    var alpha = parseFloat(angleEl.value);
+
+    moduleEl.classList.remove('invalid');
+    z1El.classList.remove('invalid');
+    z2El.classList.remove('invalid');
+
+    var errors = [];
+    if (isNaN(m) || m <= 0) { errors.push('m'); moduleEl.classList.add('invalid'); }
+    if (isNaN(z1) || z1 < 1 || z1 > 10) { errors.push('z₁ (1-10)'); z1El.classList.add('invalid'); }
+    if (isNaN(z2) || z2 < 26) { errors.push('z₂'); z2El.classList.add('invalid'); }
+
+    if (errors.length > 0) {
+      if (statusEl) {
+        statusEl.className = 'status-bar err';
+        statusEl.textContent = '⚠ Проверьте поля: ' + errors.join(', ');
+      }
+      return;
+    }
+
+    if (statusEl) {
+      statusEl.className = 'status-bar ok';
+      statusEl.textContent = '✓ Расчёт выполнен';
+    }
+
+    var d1 = m * q;
+    var da1 = m * (q + 2);
+    var df1 = m * (q - 2.5);
+    var d2 = m * z2;
+    var da2 = m * (z2 + 2);
+    var df2 = m * (z2 - 2.5);
+    var aw = m * (q + z2) / 2;
+    var u = z2 / z1;
+    var gamma = Math.atan(z1 / q);
+    var gammaDeg = gamma * 180 / Math.PI;
+    var pz = Math.PI * m * z1;
+    var h = 2.25 * m;
+    var b1 = z1 <= 2 ? (4.5 + 0.15 * z2) * m : (5.5 + 0.09 * z2) * m;
+    var b2 = 0.75 * da1;
+
+    var elements = {
+      'w-u':   u.toFixed(2),
+      'w-aw':  aw.toFixed(3) + ' мм',
+      'w-d1':  d1.toFixed(3) + ' мм',
+      'w-da1': da1.toFixed(3) + ' мм',
+      'w-df1': df1.toFixed(3) + ' мм',
+      'w-d2':  d2.toFixed(3) + ' мм',
+      'w-da2': da2.toFixed(3) + ' мм',
+      'w-df2': df2.toFixed(3) + ' мм',
+      'w-gamma': formatAngle(gammaDeg) + '  (' + gammaDeg.toFixed(2) + '°)',
+      'w-pz':  pz.toFixed(3) + ' мм',
+      'w-h':   h.toFixed(3) + ' мм',
+      'w-b1':  b1.toFixed(2) + ' мм',
+      'w-b2':  b2.toFixed(2) + ' мм'
+    };
+
+    for (var id in elements) {
+      if (elements.hasOwnProperty(id)) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = elements[id];
+      }
+    }
+
+  } catch (error) {
+    console.error('Ошибка при расчёте:', error);
+  }
+}
+
+function calculatePair() {
+  try {
+    var p1ModuleEl = document.getElementById('p1-module');
+    var p1TeethEl = document.getElementById('p1-teeth');
+    var p1AngleEl = document.getElementById('p1-angle');
+    var p1ShiftEl = document.getElementById('p1-shift');
+    
+    var p2ModuleEl = document.getElementById('p2-module');
+    var p2TeethEl = document.getElementById('p2-teeth');
+    var p2AngleEl = document.getElementById('p2-angle');
+    var p2ShiftEl = document.getElementById('p2-shift');
+    
+    var statusEl = document.getElementById('status');
+
+    if (!p1ModuleEl || !p1TeethEl || !p2ModuleEl || !p2TeethEl) return;
+
+    var m1 = parseFloat(p1ModuleEl.value);
+    var z1 = parseInt(p1TeethEl.value, 10);
+    var alpha1 = parseFloat(p1AngleEl.value);
+    var x1Raw = p1ShiftEl ? p1ShiftEl.value : '0';
+    var x1 = (x1Raw === '' || x1Raw === '-') ? 0 : parseFloat(x1Raw);
+
+    var m2 = parseFloat(p2ModuleEl.value);
+    var z2 = parseInt(p2TeethEl.value, 10);
+    var alpha2 = parseFloat(p2AngleEl.value);
+    var x2Raw = p2ShiftEl ? p2ShiftEl.value : '0';
+    var x2 = (x2Raw === '' || x2Raw === '-') ? 0 : parseFloat(x2Raw);
+
+    var betaAngle = readAngle('p-helix-deg', 'p-helix-min');
+
+    p1ModuleEl.classList.remove('invalid');
+    p1TeethEl.classList.remove('invalid');
+    p2ModuleEl.classList.remove('invalid');
+    p2TeethEl.classList.remove('invalid');
+    setInvalid('wrap-p-helix-deg', false);
+    setInvalid('wrap-p-helix-min', false);
+
+    var errors = [];
+    if (isNaN(m1) || m1 <= 0) { errors.push('m₁'); p1ModuleEl.classList.add('invalid'); }
+    if (isNaN(z1) || z1 < 6) { errors.push('z₁'); p1TeethEl.classList.add('invalid'); }
+    if (isNaN(m2) || m2 <= 0) { errors.push('m₂'); p2ModuleEl.classList.add('invalid'); }
+    if (isNaN(z2) || z2 < 6) { errors.push('z₂'); p2TeethEl.classList.add('invalid'); }
+    if (!betaAngle.valid || betaAngle.deg > 45) { 
+      errors.push('β'); 
+      if (!betaAngle.valid) {
+        setInvalid('wrap-p-helix-deg', true);
+        setInvalid('wrap-p-helix-min', true);
+      } else {
+        setInvalid('wrap-p-helix-deg', true);
+      }
+    }
+
+    var moduleMatch = Math.abs(m1 - m2) < 0.001;
+    var angleMatch = Math.abs(alpha1 - alpha2) < 0.001;
+
+    var checkModuleEl = document.getElementById('p-check-module');
+    var checkAngleEl = document.getElementById('p-check-angle');
+
+    if (!moduleMatch) {
+      errors.push('Модули не совпадают');
+      if (checkModuleEl) {
+        checkModuleEl.className = 'result-row error';
+        checkModuleEl.innerHTML = '<span class="result-label">✗ Модули не совпадают</span><span class="result-value" style="color:#ff4d7e">ОШИБКА</span>';
+      }
+    } else {
+      if (checkModuleEl) {
+        checkModuleEl.className = 'result-row success';
+        checkModuleEl.innerHTML = '<span class="result-label">✓ Совпадение модулей</span><span class="result-value" style="color:#4dff91">OK</span>';
+      }
+    }
+
+    if (!angleMatch) {
+      errors.push('Углы профиля не совпадают');
+      if (checkAngleEl) {
+        checkAngleEl.className = 'result-row error';
+        checkAngleEl.innerHTML = '<span class="result-label">✗ Углы профиля не совпадают</span><span class="result-value" style="color:#ff4d7e">ОШИБКА</span>';
+      }
+    } else {
+      if (checkAngleEl) {
+        checkAngleEl.className = 'result-row success';
+        checkAngleEl.innerHTML = '<span class="result-label">✓ Совпадение углов профиля</span><span class="result-value" style="color:#4dff91">OK</span>';
+      }
+    }
+
+    if (errors.length > 0) {
+      if (statusEl) {
+        statusEl.className = 'status-bar err';
+        statusEl.textContent = '⚠ ' + errors.join(', ');
+      }
+      return;
+    }
+
+    if (statusEl) {
+      statusEl.className = 'status-bar ok';
+      statusEl.textContent = '✓ Расчёт выполнен';
+    }
+
+    var beta = betaAngle.value;
+    var betaRad = beta * Math.PI / 180;
+    var cosBeta = Math.cos(betaRad);
+    var mn = m1;
+
+    var d1 = mn * z1 / cosBeta;
+    var d2 = mn * z2 / cosBeta;
+    var da1 = d1 + 2 * mn * (1 + x1);
+    var da2 = d2 + 2 * mn * (1 + x2);
+    var a = mn * (z1 + z2) / (2 * cosBeta);
+    var y = x1 + x2;
+    var aw = a + y * mn;
+    var u = z2 / z1;
+
+    var alphaNRad = alpha1 * Math.PI / 180;
+    var alphaTRad = Math.atan(Math.tan(alphaNRad) / cosBeta);
+    var db1 = d1 * Math.cos(alphaTRad);
+    var db2 = d2 * Math.cos(alphaTRad);
+    
+    var epsilon = (Math.sqrt(da1*da1 - db1*db1) + Math.sqrt(da2*da2 - db2*db2) - 2*a*Math.sin(alphaTRad)) / (Math.PI * mn * Math.cos(alphaNRad) / cosBeta);
+
+    var elements = {
+      'p-u': u.toFixed(3),
+      'p-aw': aw.toFixed(3) + ' мм',
+      'p-d1': d1.toFixed(3) + ' мм',
+      'p-d2': d2.toFixed(3) + ' мм',
+      'p-da1': da1.toFixed(3) + ' мм',
+      'p-da2': da2.toFixed(3) + ' мм',
+      'p-y': y.toFixed(3),
+      'p-epsilon': epsilon.toFixed(3)
+    };
+
+    for (var id in elements) {
+      if (elements.hasOwnProperty(id)) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = elements[id];
+      }
+    }
+
+  } catch (error) {
+    console.error('Ошибка при расчёте:', error);
+  }
+}
+
+function calculateConical() {
+  try {
+    var moduleEl = document.getElementById('c-module');
+    var z1El = document.getElementById('c-z1');
+    var z2El = document.getElementById('c-z2');
+    var angleEl = document.getElementById('c-angle');
+    var sigmaEl = document.getElementById('c-sigma');
+    var toothTypeEl = document.getElementById('c-tooth-type');
+    var statusEl = document.getElementById('status');
+
+    if (!moduleEl || !z1El || !z2El || !angleEl || !sigmaEl) return;
+
+    var m = parseFloat(moduleEl.value);
+    var z1 = parseInt(z1El.value, 10);
+    var z2 = parseInt(z2El.value, 10);
+    var alpha = parseFloat(angleEl.value);
+    var sigma = parseFloat(sigmaEl.value);
+    var toothType = toothTypeEl.value;
+
+    moduleEl.classList.remove('invalid');
+    z1El.classList.remove('invalid');
+    z2El.classList.remove('invalid');
+    setInvalid('wrap-c-helix-deg', false);
+    setInvalid('wrap-c-helix-min', false);
+
+    var errors = [];
+    if (isNaN(m) || m <= 0) { errors.push('m'); moduleEl.classList.add('invalid'); }
+    if (isNaN(z1) || z1 < 12) { errors.push('z₁'); z1El.classList.add('invalid'); }
+    if (isNaN(z2) || z2 < 12) { errors.push('z₂'); z2El.classList.add('invalid'); }
+    if (isNaN(sigma) || sigma <= 0 || sigma >= 180) { errors.push('Σ'); }
+
+    var beta = 0;
+    var betaRad = 0;
+    var cosBeta = 1;
+    
+    if (toothType === 'helical') {
+      var betaAngle = readAngle('c-helix-deg', 'c-helix-min');
+      if (!betaAngle.valid || betaAngle.deg > 45) {
+        errors.push('β');
+        if (!betaAngle.valid) {
+          setInvalid('wrap-c-helix-deg', true);
+          setInvalid('wrap-c-helix-min', true);
+        } else {
+          setInvalid('wrap-c-helix-deg', true);
+        }
+      } else {
+        beta = betaAngle.value;
+        betaRad = beta * Math.PI / 180;
+        cosBeta = Math.cos(betaRad);
+      }
+    }
+
+    if (errors.length > 0) {
+      if (statusEl) {
+        statusEl.className = 'status-bar err';
+        statusEl.textContent = '⚠ Проверьте поля: ' + errors.join(', ');
+      }
+      return;
+    }
+
+    if (statusEl) {
+      statusEl.className = 'status-bar ok';
+      statusEl.textContent = '✓ Расчёт выполнен';
+    }
+
+    var alphaRad = alpha * Math.PI / 180;
+    var sigmaRad = sigma * Math.PI / 180;
+
+    // Передаточное число
+    var u = z2 / z1;
+
+    // Делительные диаметры (большой торец)
+    var d1 = m * z1;
+    var d2 = m * z2;
+
+    // Конусные углы
+    var delta1, delta2;
+    if (Math.abs(sigma - 90) < 0.01) {
+      // Для Σ = 90°
+      delta1 = Math.atan(z1 / z2);
+      delta2 = Math.atan(z2 / z1);
+    } else {
+      // Общий случай
+      delta1 = Math.atan(Math.sin(sigmaRad) / (z2/z1 + Math.cos(sigmaRad)));
+      delta2 = sigmaRad - delta1;
+    }
+    var delta1Deg = delta1 * 180 / Math.PI;
+    var delta2Deg = delta2 * 180 / Math.PI;
+
+    // Внешнее конусное расстояние
+    var R = m * Math.sqrt(z1*z1 + z2*z2) / (2 * Math.sin(sigmaRad));
+
+    // Ширина зубчатого венца
+    var b = Math.min(R / 3, 10 * m);
+
+    // Средний модуль
+    var mm = m * (1 - 0.5 * b / R);
+
+    // Средние делительные диаметры
+    var dm1 = mm * z1;
+    var dm2 = mm * z2;
+
+    // Диаметры вершин
+    var da1 = d1 + 2 * m * Math.cos(delta1);
+    var da2 = d2 + 2 * m * Math.cos(delta2);
+
+    // Диаметры впадин
+    var df1 = d1 - 2 * 1.25 * m * Math.cos(delta1);
+    var df2 = d2 - 2 * 1.25 * m * Math.cos(delta2);
+
+    var elements = {
+      'c-u': u.toFixed(3),
+      'c-R': R.toFixed(3) + ' мм',
+      'c-delta1': formatAngle(delta1Deg) + '  (' + delta1Deg.toFixed(2) + '°)',
+      'c-delta2': formatAngle(delta2Deg) + '  (' + delta2Deg.toFixed(2) + '°)',
+      'c-d1': d1.toFixed(3) + ' мм',
+      'c-d2': d2.toFixed(3) + ' мм',
+      'c-da1': da1.toFixed(3) + ' мм',
+      'c-da2': da2.toFixed(3) + ' мм',
+      'c-df1': df1.toFixed(3) + ' мм',
+      'c-df2': df2.toFixed(3) + ' мм',
+      'c-b': b.toFixed(3) + ' мм',
+      'c-mm': mm.toFixed(3) + ' мм',
+      'c-dm1': dm1.toFixed(3) + ' мм',
+      'c-dm2': dm2.toFixed(3) + ' мм'
+    };
+
+    // Для винтового зуба добавляем торцовый модуль и приведённые числа зубьев
+    if (toothType === 'helical') {
+      var mt = m / cosBeta;
+      var zv1 = z1 / (Math.pow(cosBeta, 3) * Math.cos(delta1));
+      var zv2 = z2 / (Math.pow(cosBeta, 3) * Math.cos(delta2));
+      
+      elements['c-mt'] = mt.toFixed(3) + ' мм';
+      elements['c-zv1'] = zv1.toFixed(2);
+      elements['c-zv2'] = zv2.toFixed(2);
+    }
+
+    for (var id in elements) {
+      if (elements.hasOwnProperty(id)) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = elements[id];
+      }
+    }
+
+  } catch (error) {
+    console.error('Ошибка при расчёте:', error);
+  }
+}
+
+function copyResults() {
+  var text = '';
+  var date = new Date();
+  var dateStr = date.toLocaleString('ru-RU');
+  
+  text += '═══════════════════════════════════\n';
+  text += '   РАСЧЁТ ЗУБЧАТЫХ ПЕРЕДАЧ\n';
+  text += '   Gear Calculator Pro\n';
+  text += '   ' + dateStr + '\n';
+  text += '═══════════════════════════════════\n\n';
+  
+  if (currentType === 'cylindrical') {
+    text += '▸ Тип: Цилиндрическая шестерня\n\n';
+    text += '─── ИСХОДНЫЕ ДАННЫЕ ───\n';
+    text += 'Модуль m_n: ' + document.getElementById('module').value + ' мм\n';
+    text += 'Количество зубьев z: ' + document.getElementById('teeth').value + '\n';
+    text += 'Угол профиля α_n: ' + document.getElementById('angle').value + '°\n';
+    var betaAngle = readAngle('helix-deg', 'helix-min');
+    text += 'Угол наклона β: ' + betaAngle.deg + '° ' + betaAngle.min + '\'\n';
+    text += 'Коэффициент смещения x: ' + document.getElementById('shift').value + '\n\n';
+    
+    text += '─── РЕЗУЛЬТАТЫ РАСЧЁТА ───\n';
+    var resultIds = ['r-mt', 'r-d', 'r-da', 'r-df', 'r-db', 'r-zv', 'r-k', 'r-wk', 'r-at', 'r-pz', 'r-h'];
+    var resultLabels = [
+      'Торцовый модуль m_t',
+      'Делительный диаметр d',
+      'Диаметр вершин dₐ',
+      'Диаметр впадин d_f',
+      'Основной диаметр d_b',
+      'Приведённое z_v',
+      'Зубьев в нормали k',
+      'Длина нормали W_kn',
+      'Торцовый угол α_t',
+      'Ход винта P_z',
+      'Высота зуба h'
+    ];
+    for (var i = 0; i < resultIds.length; i++) {
+      var el = document.getElementById(resultIds[i]);
+      if (el && el.textContent !== '—') {
+        text += resultLabels[i] + ': ' + el.textContent + '\n';
+      }
+    }
+  } 
+  else if (currentType === 'worm') {
+    text += '▸ Тип: Червячная передача\n\n';
+    text += '─── ИСХОДНЫЕ ДАННЫЕ ───\n';
+    text += 'Модуль m: ' + document.getElementById('w-module').value + ' мм\n';
+    text += 'Количество заходов z₁: ' + document.getElementById('w-z1').value + '\n';
+    text += 'Количество зубьев z₂: ' + document.getElementById('w-z2').value + '\n';
+    text += 'Коэффициент диаметра q: ' + document.getElementById('w-q').value + '\n';
+    text += 'Угол профиля α: ' + document.getElementById('w-angle').value + '°\n\n';
+    
+    text += '─── РЕЗУЛЬТАТЫ РАСЧЁТА ───\n';
+    var wormIds = ['w-u', 'w-aw', 'w-d1', 'w-da1', 'w-df1', 'w-d2', 'w-da2', 'w-df2', 'w-gamma', 'w-pz', 'w-h', 'w-b1', 'w-b2'];
+    var wormLabels = [
+      'Передаточное число u',
+      'Межосевое расстояние a_w',
+      'Диаметр червяка d₁',
+      'Диаметр вершин червяка d_a1',
+      'Диаметр впадин червяка d_f1',
+      'Диаметр колеса d₂',
+      'Диаметр вершин колеса d_a2',
+      'Диаметр впадин колеса d_f2',
+      'Угол подъёма витка γ',
+      'Ход червяка p_z',
+      'Высота витка h',
+      'Длина нарезанной части b₁',
+      'Ширина колеса b₂'
+    ];
+    for (var i = 0; i < wormIds.length; i++) {
+      var el = document.getElementById(wormIds[i]);
+      if (el && el.textContent !== '—') {
+        text += wormLabels[i] + ': ' + el.textContent + '\n';
+      }
+    }
+  } 
+  else if (currentType === 'pair') {
+    text += '▸ Тип: Пара цилиндрических шестерён\n\n';
+    text += '─── ШЕСТЕРНЯ 1 ───\n';
+    text += 'Модуль m_n: ' + document.getElementById('p1-module').value + ' мм\n';
+    text += 'Количество зубьев z₁: ' + document.getElementById('p1-teeth').value + '\n';
+    text += 'Угол профиля α_n: ' + document.getElementById('p1-angle').value + '°\n';
+    text += 'Смещение x₁: ' + document.getElementById('p1-shift').value + '\n\n';
+    
+    text += '─── ШЕСТЕРНЯ 2 ───\n';
+    text += 'Модуль m_n: ' + document.getElementById('p2-module').value + ' мм\n';
+    text += 'Количество зубьев z₂: ' + document.getElementById('p2-teeth').value + '\n';
+    text += 'Угол профиля α_n: ' + document.getElementById('p2-angle').value + '°\n';
+    text += 'Смещение x₂: ' + document.getElementById('p2-shift').value + '\n\n';
+    
+    var betaAngle = readAngle('p-helix-deg', 'p-helix-min');
+    text += 'Угол наклона β (общий): ' + betaAngle.deg + '° ' + betaAngle.min + '\'\n\n';
+    
+    text += '─── РЕЗУЛЬТАТЫ РАСЧЁТА ───\n';
+    var pairIds = ['p-u', 'p-aw', 'p-d1', 'p-d2', 'p-da1', 'p-da2', 'p-y', 'p-epsilon'];
+    var pairLabels = [
+      'Передаточное число u',
+      'Межосевое расстояние a_w',
+      'Диаметр шестерни 1 d₁',
+      'Диаметр шестерни 2 d₂',
+      'Диаметр вершин шестерни 1 d_a1',
+      'Диаметр вершин шестерни 2 d_a2',
+      'Коэффициент центрирования y',
+      'Коэффициент перекрытия ε_α'
+    ];
+    for (var i = 0; i < pairIds.length; i++) {
+      var el = document.getElementById(pairIds[i]);
+      if (el && el.textContent !== '—') {
+        text += pairLabels[i] + ': ' + el.textContent + '\n';
+      }
+    }
+  }
+  else if (currentType === 'conical') {
+    text += '▸ Тип: Коническая шестерня\n\n';
+    text += '─── ИСХОДНЫЕ ДАННЫЕ ───\n';
+    text += 'Модуль m: ' + document.getElementById('c-module').value + ' мм\n';
+    text += 'Количество зубьев z₁: ' + document.getElementById('c-z1').value + '\n';
+    text += 'Количество зубьев z₂: ' + document.getElementById('c-z2').value + '\n';
+    text += 'Угол профиля α: ' + document.getElementById('c-angle').value + '°\n';
+    text += 'Межосевой угол Σ: ' + document.getElementById('c-sigma').value + '°\n';
+    var toothType = document.getElementById('c-tooth-type').value;
+    text += 'Тип зуба: ' + (toothType === 'straight' ? 'Прямой' : 'Винтовой') + '\n';
+    if (toothType === 'helical') {
+      var betaAngle = readAngle('c-helix-deg', 'c-helix-min');
+      text += 'Угол наклона β: ' + betaAngle.deg + '° ' + betaAngle.min + '\'\n';
+    }
+    text += '\n─── РЕЗУЛЬТАТЫ РАСЧЁТА ───\n';
+    
+    var conicalIds = ['c-u', 'c-R', 'c-delta1', 'c-delta2', 'c-d1', 'c-d2', 'c-da1', 'c-da2', 'c-df1', 'c-df2', 'c-b', 'c-mm', 'c-dm1', 'c-dm2'];
+    var conicalLabels = [
+      'Передаточное число u',
+      'Внешнее конусное расстояние R',
+      'Конусный угол шестерни δ₁',
+      'Конусный угол колеса δ₂',
+      'Делительный диаметр шестерни d₁',
+      'Делительный диаметр колеса d₂',
+      'Диаметр вершин шестерни d_a1',
+      'Диаметр вершин колеса d_a2',
+      'Диаметр впадин шестерни d_f1',
+      'Диаметр впадин колеса d_f2',
+      'Ширина зубчатого венца b',
+      'Средний модуль m_m',
+      'Средний делительный d_m1',
+      'Средний делительный d_m2'
+    ];
+    for (var i = 0; i < conicalIds.length; i++) {
+      var el = document.getElementById(conicalIds[i]);
+      if (el && el.textContent !== '—') {
+        text += conicalLabels[i] + ': ' + el.textContent + '\n';
+      }
+    }
+    
+    if (toothType === 'helical') {
+      var elMt = document.getElementById('c-mt');
+      var elZv1 = document.getElementById('c-zv1');
+      var elZv2 = document.getElementById('c-zv2');
+      if (elMt && elMt.textContent !== '—') text += 'Торцовый модуль m_t: ' + elMt.textContent + '\n';
+      if (elZv1 && elZv1.textContent !== '—') text += 'Приведённое z_v1: ' + elZv1.textContent + '\n';
+      if (elZv2 && elZv2.textContent !== '—') text += 'Приведённое z_v2: ' + elZv2.textContent + '\n';
+    }
+  }
+  
+  text += '\n═══════════════════════════════════\n';
+  text += '  Рассчитано в Gear Calculator Pro\n';
+  text += '═══════════════════════════════════\n';
+  
+  var btn = document.getElementById('copy-btn');
+  var btnText = document.getElementById('copy-btn-text');
+  
+  var doCopy = function() {
+    btn.classList.add('copied');
+    btnText.textContent = '✓ Скопировано!';
+    setTimeout(function() {
+      btn.classList.remove('copied');
+      btnText.textContent = 'Скопировать результаты';
+    }, 2000);
+  };
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(doCopy).catch(function(err) {
+      console.error('Ошибка копирования:', err);
+      fallbackCopy(text, doCopy);
+    });
+  } else {
+    fallbackCopy(text, doCopy);
+  }
+}
+
+function fallbackCopy(text, callback) {
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  
+  try {
+    document.execCommand('copy');
+    if (callback) callback();
+  } catch (err) {
+    console.error('Fallback копирование не удалось:', err);
+    alert('Не удалось скопировать. Попробуйте вручную.');
+  }
+  
+  document.body.removeChild(textarea);
+}
+
+window.addEventListener('load', function() {
+  try { calculate(); } catch (e) { console.error(e); }
+});
+
+var cylInputs = ['module', 'teeth', 'angle', 'helix-deg', 'helix-min', 'shift'];
+for (var i = 0; i < cylInputs.length; i++) {
+  (function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', function() {
+        if (currentType === 'cylindrical') calculate();
+      });
+      el.addEventListener('change', function() {
+        if (currentType === 'cylindrical') calculate();
+      });
+    }
+  })(cylInputs[i]);
+}
+
+var wormInputs = ['w-module', 'w-z1', 'w-z2', 'w-q', 'w-angle'];
+for (var i = 0; i < wormInputs.length; i++) {
+  (function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', function() {
+        if (currentType === 'worm') calculate();
+      });
+      el.addEventListener('change', function() {
+        if (currentType === 'worm') calculate();
+      });
+    }
+  })(wormInputs[i]);
+}
+
+var pairInputs = ['p1-module', 'p1-teeth', 'p1-angle', 'p1-shift', 'p2-module', 'p2-teeth', 'p2-angle', 'p2-shift', 'p-helix-deg', 'p-helix-min'];
+for (var i = 0; i < pairInputs.length; i++) {
+  (function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', function() {
+        if (currentType === 'pair') calculate();
+      });
+      el.addEventListener('change', function() {
+        if (currentType === 'pair') calculate();
+      });
+    }
+  })(pairInputs[i]);
+}
+
+var conicalInputs = ['c-module', 'c-z1', 'c-z2', 'c-angle', 'c-sigma', 'c-tooth-type', 'c-helix-deg', 'c-helix-min'];
+for (var i = 0; i < conicalInputs.length; i++) {
+  (function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', function() {
+        if (currentType === 'conical') calculate();
+      });
+      el.addEventListener('change', function() {
+        if (currentType === 'conical') calculate();
+      });
+    }
+  })(conicalInputs[i]);
+}
+</script>
+</body>
+</html>
